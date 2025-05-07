@@ -1,0 +1,142 @@
+body {
+  font-family: "Comic Sans MS", cursive, sans-serif;
+  background-color: #e0f7fa;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.game-container {
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  max-width: 850px;
+  text-align: center;
+}
+
+h1 {
+  color: #0077b6;
+  margin-bottom: 20px;
+}
+
+.game-controls {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+button {
+  background-color: #00b4d8;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #0096c7;
+}
+
+button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.game-info {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+#game-canvas {
+  background-color: #48cae4;
+  border-radius: 10px;
+  display: block;
+  margin: 0 auto;
+  border: 3px solid #0077b6;
+}
+
+.instructions {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f0f8ff;
+  border-radius: 10px;
+  text-align: left;
+}
+
+#game-over {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  z-index: 100;
+}
+
+#game-over.hidden {
+  display: none;
+}
+
+#game-over h2 {
+  color: #d90429;
+  margin-bottom: 20px;
+}
+
+#play-again {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 18px;
+}
+
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  color: #0077b6;
+  z-index: 1000;
+}
+
+#loading-progress {
+  margin-top: 10px;
+  font-size: 18px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .game-controls {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #game-canvas {
+    width: 100%;
+    height: auto;
+  }
+}
