@@ -1,5 +1,5 @@
-# ISCG6420 Assessment #2 – Group Project  
-**Bachelor of Computing Systems**  
+# ISCG6420 Assessment #3 – Group Project  
+**Unitec Bachelor of Computing Systems**  
 **Course: Internet & Website Development – Level 6**  
 **Semester 1, 2025**
 
