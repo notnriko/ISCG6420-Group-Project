@@ -1,35 +1,51 @@
 // Constants
 const CANVAS_WIDTH = 800, CANVAS_HEIGHT = 600;
 const TOY_RADIUS = 30, TOY_STAGE2_DURATION = 5000, TOY_STAGE3_DURATION = 5000;
-const frameDelay = 6; // Controls animation speed
+const frameDelay = 6;
 
-// Sprite frame details
-const totalCols = 8;
-const totalRows = 6;
-const frameWidth = 27;
-const frameHeight = 33;
+// Sprite sheet frame config
+const totalCols = 8, totalRows = 6;
+const frameWidth = 27, frameHeight = 33;
 const frameCount = totalCols;
+
 let frameX = 0, frameY = 0, frameTicker = 0;
+let directionName = 'south';
+let lastDirectionName = 'south';
+let animationFrame = 0;
 
 // Canvas & context
 let canvas, ctx;
 
 // Game state
-let gameActive = false, score = 0, timeLeft = 0, gameInterval, toys = [], lastToyTime = 0, toyInterval = 2000;
+let gameActive = false, score = 0, timeLeft = 0, gameInterval;
+let toys = [], lastToyTime = 0;
+let toyInterval = 2000, toyDropSpeed = 2;
 
-// Character (center-based position)
+// Character
 let character = {
   x: CANVAS_WIDTH / 2,
   y: CANVAS_HEIGHT / 2,
   width: frameWidth * 2,
   height: frameHeight * 2,
   speed: 5,
-  direction: 'down',
+  direction: 'south',
   isMoving: false
 };
 
-// Keys pressed
+// Key states
 const keys = {ArrowUp:false,ArrowDown:false,ArrowLeft:false,ArrowRight:false,w:false,a:false,s:false,d:false,' ':false};
+
+// Sprite direction mapping
+const directionToSwimFrame = {
+  north: 7,
+  northwest: 0,
+  west: 1,
+  southwest: 2,
+  south: 3,
+  southeast: 4,
+  east: 5,
+  northeast: 6
+};
 
 // Assets
 let sounds = {}, characterImg = new Image(), backgroundImg = new Image();
@@ -44,10 +60,11 @@ const imagePaths = {
   background: './assets/images/water.jpg'
 };
 
+// Asset loading
 let assetsLoaded = 0, assetsToLoad = 6;
 function assetLoaded() {
   assetsLoaded++;
-  document.getElementById('loading-progress').textContent = `${Math.floor((assetsLoaded/assetsToLoad)*100)}%`;
+  document.getElementById('loading-progress').textContent = `${Math.floor((assetsLoaded / assetsToLoad) * 100)}%`;
   if (assetsLoaded === assetsToLoad) {
     setTimeout(() => {
       document.getElementById('loading').classList.add('hidden');
@@ -67,6 +84,7 @@ function loadAssets() {
   }
 }
 
+// Init
 window.addEventListener('DOMContentLoaded', () => {
   canvas = document.getElementById('game-canvas');
   ctx = canvas.getContext('2d');
@@ -89,7 +107,7 @@ function keyDown(e) {
   if (e.key in keys) {
     keys[e.key] = true;
     e.preventDefault();
-    updateDirection(e.key);
+    character.isMoving = true;
   }
 }
 function keyUp(e) {
@@ -100,19 +118,13 @@ function keyUp(e) {
   }
 }
 
-function updateDirection(key) {
-  character.isMoving = true;
-  if(['ArrowRight','d'].includes(key)) character.direction = 'right';
-  if(['ArrowLeft','a'].includes(key)) character.direction = 'left';
-  if(['ArrowUp','w'].includes(key)) character.direction = 'up';
-  if(['ArrowDown','s'].includes(key)) character.direction = 'down';
-}
-
+// Game functions
 function initGame() {
   for (let s of Object.values(sounds)) s.volume = document.getElementById('volume').value;
   drawInitialScreen();
   document.getElementById('start-btn').disabled = false;
 }
+
 function startGame() {
   sounds.start.play();
   gameActive = true;
@@ -122,19 +134,40 @@ function startGame() {
   document.getElementById('score').textContent = score;
   document.getElementById('start-btn').disabled = true;
   document.getElementById('restart-btn').disabled = false;
-  document.querySelector('.instructions').classList.add('hidden');
+
+  // Reset character position
+  character.x = CANVAS_WIDTH / 2;
+  character.y = CANVAS_HEIGHT / 2;
+  character.direction = 'south';
+  frameX = 0;
+  animationFrame = 0;
+
+  // Set difficulty
+  const difficulty = document.getElementById('difficulty')?.value || 'normal';
+  if (difficulty === 'easy') {
+    toyDropSpeed = 1.5;
+    toyInterval = 2500;
+  } else if (difficulty === 'normal') {
+    toyDropSpeed = 2;
+    toyInterval = 2000;
+  } else if (difficulty === 'hard') {
+    toyDropSpeed = 2.5;
+    toyInterval = 1500;
+  }
+
   lastToyTime = Date.now();
   updateTimerDisplay();
   gameInterval = setInterval(gameLoop, 1000 / 60);
 }
+
 function restartGame() {
   clearInterval(gameInterval);
   gameActive = false;
   document.getElementById('game-over').classList.add('hidden');
-  document.querySelector('.instructions').classList.remove('hidden');
   document.getElementById('start-btn').disabled = false;
   drawInitialScreen();
 }
+
 function endGame() {
   gameActive = false;
   clearInterval(gameInterval);
@@ -148,26 +181,63 @@ function gameLoop() {
   update();
   render();
 }
+
 function update() {
-  if ((timeLeft -= 1 / 60) <= 0) { endGame(); return; }
+  if ((timeLeft -= 1 / 60) <= 0) return endGame();
   if (Math.floor(timeLeft) !== Math.floor(timeLeft + 1 / 60)) updateTimerDisplay();
 
   const halfW = character.width / 2, halfH = character.height / 2;
-  if (keys.ArrowUp || keys.w) character.y = Math.max(halfH, character.y - character.speed);
-  if (keys.ArrowDown || keys.s) character.y = Math.min(CANVAS_HEIGHT - halfH, character.y + character.speed);
-  if (keys.ArrowLeft || keys.a) character.x = Math.max(halfW, character.x - character.speed);
-  if (keys.ArrowRight || keys.d) character.x = Math.min(CANVAS_WIDTH - halfW, character.x + character.speed);
+  let dx = 0, dy = 0;
+  if (keys.ArrowUp || keys.w) dy -= 1;
+  if (keys.ArrowDown || keys.s) dy += 1;
+  if (keys.ArrowLeft || keys.a) dx -= 1;
+  if (keys.ArrowRight || keys.d) dx += 1;
 
-  if (keys[' ']) { attemptCollection(); keys[' '] = false; }
-  if (Date.now() - lastToyTime > toyInterval) { spawnToy(); lastToyTime = Date.now(); }
+  if (dy < 0) character.y = Math.max(halfH, character.y - character.speed);
+  if (dy > 0) character.y = Math.min(CANVAS_HEIGHT - halfH, character.y + character.speed);
+  if (dx < 0) character.x = Math.max(halfW, character.x - character.speed);
+  if (dx > 0) character.x = Math.min(CANVAS_WIDTH - halfW, character.x + character.speed);
+
+  // Determine direction
+  if (dx !== 0 || dy !== 0) {
+    if (dx === -1 && dy === -1) directionName = 'northwest';
+    else if (dx === -1 && dy === 0) directionName = 'west';
+    else if (dx === -1 && dy === 1) directionName = 'southwest';
+    else if (dx === 0 && dy === 1) directionName = 'south';
+    else if (dx === 1 && dy === 1) directionName = 'southeast';
+    else if (dx === 1 && dy === 0) directionName = 'east';
+    else if (dx === 1 && dy === -1) directionName = 'northeast';
+    else if (dx === 0 && dy === -1) directionName = 'north';
+    lastDirectionName = directionName;
+  }
+
+  // Frame animation
+  if (dx !== 0 || dy !== 0) {
+    // Moving: animate frameY through swim frames (3–6)
+    if (++frameTicker >= frameDelay) {
+      frameTicker = 0;
+      frameY = 3 + ((frameY - 3 + 1) % 4);  // Cycle 3 → 6
+    }
+    frameX = directionToSwimFrame[directionName];
+    character.isMoving = true;
+  } else {
+    // Idle: freeze on last direction
+    frameY = 1;
+    frameX = directionToSwimFrame[lastDirectionName];
+    character.isMoving = false;
+  }
+
+  if (keys[' ']) {
+    attemptCollection();
+    keys[' '] = false;
+  }
+
+  if (Date.now() - lastToyTime > toyInterval) {
+    spawnToy();
+    lastToyTime = Date.now();
+  }
+
   updateToys();
-
-  frameTicker = (frameTicker + 1) % frameDelay;
-  if (frameTicker === 0) frameX = (frameX + 1) % frameCount;
-
-  frameY = character.isMoving 
-    ? { down: 3, left: 4, right: 5, up: 3 }[character.direction]
-    : { down: 0, left: 1, right: 2, up: 0 }[character.direction];
 }
 
 function render() {
@@ -181,30 +251,20 @@ function drawInitialScreen() {
   ctx.drawImage(backgroundImg, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
   ctx.fillStyle = 'white';
   ctx.font = '24px Comic Sans MS';
+  ctx.textAlign = 'center';
   ctx.fillText('Press START to begin!', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
 }
+
 function updateTimerDisplay() {
   let m = Math.floor(timeLeft / 60), s = Math.floor(timeLeft % 60);
-  document.getElementById('time').textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  document.getElementById('time').textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
 }
 
 function drawCharacter() {
   if (!characterImg.complete) return;
-
   const drawX = Math.round(character.x - character.width / 2);
   const drawY = Math.round(character.y - character.height / 2);
-
-  ctx.drawImage(
-    characterImg,
-    frameX * frameWidth,
-    frameY * frameHeight,
-    frameWidth,
-    frameHeight,
-    drawX,
-    drawY,
-    character.width,
-    character.height
-  );
+  ctx.drawImage(characterImg, frameX * frameWidth, frameY * frameHeight, frameWidth, frameHeight, drawX, drawY, character.width, character.height);
 }
 
 function spawnToy() {
@@ -224,7 +284,7 @@ function updateToys() {
   const now = Date.now();
   toys = toys.filter(toy => {
     if (toy.stage === 1) {
-      toy.y += 2;
+      toy.y += toyDropSpeed;
       if (toy.y >= toy.targetY) {
         toy.stage = 2;
         toy.stageStartTime = now;
@@ -234,7 +294,7 @@ function updateToys() {
       toy.stageStartTime = now;
       toy.initialRadius = toy.radius;
     } else if (toy.stage === 3) {
-      let p = (now - toy.stageStartTime) / TOY_STAGE3_DURATION;
+      const p = (now - toy.stageStartTime) / TOY_STAGE3_DURATION;
       if (p >= 1) return false;
       toy.radius = toy.initialRadius * (1 - p);
       toy.opacity = 1 - p;
@@ -261,22 +321,61 @@ function drawToys() {
 
 function attemptCollection() {
   let collected = false;
-  const characterHitRadius = Math.min(character.width, character.height) * 0.3;
+  const characterHitRadius = Math.max(character.width, character.height) * 0.45;
 
   for (let i = toys.length - 1; i >= 0; i--) {
     const toy = toys[i];
+
+    if (toy.stage !== 2 && toy.stage !== 3) continue;
+
     const dx = character.x - toy.x;
     const dy = character.y - toy.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     if (distance < characterHitRadius + toy.radius) {
-      score += toy.stage === 2 ? 2 : 1;
+      const gain = toy.stage === 2 ? 2 : 1;
+      score += gain;
       document.getElementById('score').textContent = score;
       sounds.collect.play();
       toys.splice(i, 1);
       collected = true;
+
+      // Show +1 / +2 feedback in green
+      const feedback = document.getElementById('score-feedback');
+      feedback.textContent = `+${gain}`;
+      feedback.classList.remove('hidden', 'red');
+      feedback.classList.add('green');
+      positionFeedback(feedback, character.x, character.y);
       break;
     }
   }
-  if (!collected) sounds.fail.play();
+
+  if (!collected) {
+    score = Math.max(0, score - 1);
+    document.getElementById('score').textContent = score;
+    sounds.fail.play();
+
+    // Show -1 feedback in red
+    const feedback = document.getElementById('miss-feedback');
+    feedback.textContent = `-1`;
+    feedback.classList.remove('hidden', 'green');
+    feedback.classList.add('red');
+    positionFeedback(feedback, character.x, character.y);
+  }
+}
+
+function positionFeedback(element, charX, charY) {
+  const offsetLeft = canvas.offsetLeft;
+  const offsetTop = canvas.offsetTop;
+
+  element.style.left = `${offsetLeft + charX - 10}px`;
+  element.style.top = `${offsetTop + charY - 30}px`;
+
+  element.classList.remove('hidden');
+  element.classList.add('show');
+
+  setTimeout(() => {
+    element.classList.remove('show');
+    element.classList.add('hidden');
+  }, 500);
 }

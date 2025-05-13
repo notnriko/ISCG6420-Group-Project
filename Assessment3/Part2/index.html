@@ -1,74 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SafeSwimmer Game | Parakai Springs</title>
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <div class="game-container">
-      <div id="loading" class="loading-screen">
-        Loading game assets...
-        <div id="loading-progress">0%</div>
-      </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeSwimmer Game | Parakai Springs</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <h1 class="game-title">SafeSwimmer Game</h1>
 
-      <h1>SafeSwimmer Game</h1>
+  <!-- Loading Screen -->
+  <div id="loading" class="loading-screen">
+    Loading game assets...
+    <div id="loading-progress">0%</div>
+  </div>
+
+  <!-- Main Game Layout -->
+  <div class="game-main hidden" id="game-content">
+    
+    <!-- Left Panel: Controls + Score/Timer -->
+    <div class="left-panel">
       <div class="game-controls">
-        <div class="time-controls">
-          <label for="game-time">Game Duration:</label>
-          <select id="game-time">
-            <option value="60">1 Minute</option>
-            <option value="120">2 Minutes</option>
-          </select>
+        <label for="game-time">Game Duration:</label>
+        <select id="game-time">
+          <option value="60">1 Minute</option>
+          <option value="120">2 Minutes</option>
+        </select>
+
+        <label for="volume">Volume:</label>
+        <input type="range" id="volume" min="0" max="1" step="0.1" value="0.7" />
+
+        <label for="difficulty">Difficulty:</label>
+        <select id="difficulty">
+          <option value="easy">Easy</option>
+          <option value="normal" selected>Normal</option>
+          <option value="hard">Hard</option>
+        </select>
+
+        <div class="button-group">
+          <button id="start-btn">Start Game</button>
+          <button id="restart-btn" disabled>Restart</button>
         </div>
-        <div class="volume-control">
-          <label for="volume">Volume:</label>
-          <input
-            type="range"
-            id="volume"
-            min="0"
-            max="1"
-            step="0.1"
-            value="0.7"
-          />
-        </div>
-        <div class="difficulty-control">
-          <label for="difficulty">Difficulty:</label>
-          <select id="difficulty">
-            <option value="easy">Easy</option>
-            <option value="normal" selected>Normal</option>
-            <option value="hard">Hard</option>
-          </select>
-        </div>        
-        <button id="start-btn">Start Game</button>
-        <button id="restart-btn" disabled>Restart</button>
       </div>
 
       <div class="game-info">
         <div class="score">Score: <span id="score">0</span></div>
         <div class="timer">Time Left: <span id="time">00:00</span></div>
       </div>
+    </div>
 
-      <!-- The game canvas (hidden until loaded) -->
-      <div id="game-content" class="hidden">
-        <canvas id="game-canvas" width="800" height="600"></canvas>
+    <!-- Center Panel: Canvas + Feedback + Game Over -->
+    <div class="center-panel">
+      <canvas id="game-canvas" width="800" height="600"></canvas>
 
-        <div class="instructions">
-          <h3>How to Play</h3>
-          <p>Use arrow keys or WASD to move the swimmer.</p>
-          <p>Press SPACEBAR to collect toys before they sink!</p>
-          <p>Collect as many toys as you can before time runs out.</p>
-        </div>
+      <!-- Feedback Animations -->
+      <div id="score-feedback" class="feedback hidden">+1</div>
+      <div id="miss-feedback" class="feedback hidden">-1</div>
 
-        <div id="game-over" class="hidden">
-          <h2>Game Over!</h2>
-          <p>Your final score: <span id="final-score">0</span></p>
-          <button id="play-again">Play Again</button>
-        </div>
+      <!-- Game Over -->
+      <div id="game-over" class="hidden">
+        <h2>Game Over!</h2>
+        <p>Your final score: <span id="final-score">0</span></p>
+        <button id="play-again">Play Again</button>
       </div>
     </div>
 
-    <script src="./script.js"></script>
-  </body>
+    <!-- Right Panel: Instructions -->
+    <div class="right-panel">
+      <div id="game-instructions" class="instructions">
+        <h3>How to Play</h3>
+        <p>Use <strong>arrow keys</strong> or <strong>WASD</strong> to move the swimmer around the pool.</p>
+        <p>Press the <strong>SPACEBAR</strong> to collect floating toys before they sink.</p>
+        <p>You’ll earn <strong>+2 points</strong> for collecting a toy while it's floating, or <strong>+1 point</strong> if it’s already sinking.</p>
+        <p>If you press SPACEBAR and miss a toy, <strong>1 point will be deducted</strong>. Your score can't go below 0.</p>
+        <p>Try to collect as many toys as you can before time runs out!</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
 </html>
