@@ -73,6 +73,8 @@ function assetLoaded() {
     }, 500);
   }
 }
+
+// Asset loading
 function loadAssets() {
   characterImg.onload = assetLoaded;
   characterImg.src = imagePaths.character;
@@ -84,7 +86,7 @@ function loadAssets() {
   }
 }
 
-// Init
+// Initialisation and event listeners
 window.addEventListener('DOMContentLoaded', () => {
   canvas = document.getElementById('game-canvas');
   ctx = canvas.getContext('2d');
@@ -92,6 +94,7 @@ window.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
 });
 
+// Setup event listeners
 function setupEventListeners() {
   document.addEventListener('keydown', keyDown);
   document.addEventListener('keyup', keyUp);
@@ -103,6 +106,7 @@ function setupEventListeners() {
   };
 }
 
+// Key event handlers
 function keyDown(e) {
   if (e.key in keys) {
     keys[e.key] = true;
@@ -110,6 +114,7 @@ function keyDown(e) {
     character.isMoving = true;
   }
 }
+
 function keyUp(e) {
   if (e.key in keys) {
     keys[e.key] = false;
@@ -125,6 +130,7 @@ function initGame() {
   document.getElementById('start-btn').disabled = false;
 }
 
+// Start game
 function startGame() {
   sounds.start.play();
   gameActive = true;
@@ -160,6 +166,7 @@ function startGame() {
   gameInterval = setInterval(gameLoop, 1000 / 60);
 }
 
+// Restart game
 function restartGame() {
   clearInterval(gameInterval);
   gameActive = false;
@@ -168,6 +175,7 @@ function restartGame() {
   drawInitialScreen();
 }
 
+// End game
 function endGame() {
   gameActive = false;
   clearInterval(gameInterval);
@@ -177,11 +185,13 @@ function endGame() {
   document.getElementById('start-btn').disabled = false;
 }
 
+// Game loop
 function gameLoop() {
   update();
   render();
 }
 
+// Game update
 function update() {
   if ((timeLeft -= 1 / 60) <= 0) return endGame();
   if (Math.floor(timeLeft) !== Math.floor(timeLeft + 1 / 60)) updateTimerDisplay();
@@ -240,12 +250,14 @@ function update() {
   updateToys();
 }
 
+// Game render
 function render() {
   ctx.drawImage(backgroundImg, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
   drawToys();
   drawCharacter();
 }
 
+// Initial screen
 function drawInitialScreen() {
   ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
   ctx.drawImage(backgroundImg, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -255,11 +267,13 @@ function drawInitialScreen() {
   ctx.fillText('Press START to begin!', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
 }
 
+// Timer display
 function updateTimerDisplay() {
   let m = Math.floor(timeLeft / 60), s = Math.floor(timeLeft % 60);
   document.getElementById('time').textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
 }
 
+// Draw character on canvas at current position
 function drawCharacter() {
   if (!characterImg.complete) return;
   const drawX = Math.round(character.x - character.width / 2);
@@ -267,6 +281,7 @@ function drawCharacter() {
   ctx.drawImage(characterImg, frameX * frameWidth, frameY * frameHeight, frameWidth, frameHeight, drawX, drawY, character.width, character.height);
 }
 
+// Draw toys on canvas
 function spawnToy() {
   toys.push({
     x: Math.random() * (CANVAS_WIDTH - 100) + 50,
@@ -280,6 +295,7 @@ function spawnToy() {
   });
 }
 
+// Update toys on canvas
 function updateToys() {
   const now = Date.now();
   toys = toys.filter(toy => {
@@ -303,6 +319,7 @@ function updateToys() {
   });
 }
 
+// Draw toys on canvas
 function drawToys() {
   for (let t of toys) {
     ctx.save();
@@ -319,6 +336,7 @@ function drawToys() {
   }
 }
 
+// Attempt to collect a toy
 function attemptCollection() {
   let collected = false;
   const characterHitRadius = Math.max(character.width, character.height) * 0.45;
@@ -364,6 +382,7 @@ function attemptCollection() {
   }
 }
 
+// Position feedback element on canvas
 function positionFeedback(element, charX, charY) {
   const offsetLeft = canvas.offsetLeft;
   const offsetTop = canvas.offsetTop;
